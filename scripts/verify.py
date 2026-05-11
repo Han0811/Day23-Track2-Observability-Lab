@@ -77,7 +77,7 @@ def main() -> int:
 
     # 03-tracing-and-logs
     results.append(check("03: Jaeger UI reachable", http_ok("http://localhost:16686/")))
-    results.append(check("03: Loki ready", http_ok("http://localhost:3100/ready")))
+    results.append(check("03: Loki ready", http_ok("http://127.0.0.1:3100/ready")))
     results.append(check("03: OTel Collector self-metrics reachable", http_ok("http://localhost:8888/metrics")))
 
     # 04-drift-detection

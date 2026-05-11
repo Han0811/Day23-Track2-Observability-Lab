@@ -21,7 +21,7 @@ You will:
 2. Read `HARDWARE-GUIDE.md` — confirm your machine can run 7 containers
 3. Read `VIBE-CODING.md` — pick a persona (SRE / Platform / Data) before you begin
 
-## Quick start
+## Quick start (Linux/macOS)
 
 ```bash
 git clone <your-fork> && cd Day23-Track2-Observability-Lab
@@ -34,6 +34,59 @@ make alert                 # kill app → wait for fire → restore → wait for
 make drift                 # run PSI/KL/KS on synthetic shifted data
 make verify                # rubric gate — exit 0 = ready to submit
 make down                  # stop (preserves data)
+```
+
+## Quick start (Windows PowerShell)
+
+Nếu bạn không dùng WSL2 mà muốn chạy trực tiếp trên Windows (PowerShell), hãy dùng các lệnh sau:
+
+```powershell
+# 1. Clone và vào thư mục (nếu chưa làm)
+# git clone <your-fork> ; cd Day23-Track2-Observability-Lab
+
+# 2. Tạo file .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+
+# 3. Setup (Pull images và verify)
+$images = @(
+  "prom/prometheus:v2.55.0",
+  "prom/alertmanager:v0.27.0",
+  "grafana/grafana:11.3.0",
+  "grafana/loki:3.3.0",
+  "jaegertracing/all-in-one:1.62.0",
+  "otel/opentelemetry-collector-contrib:0.114.0"
+)
+foreach ($img in $images) { Write-Host "Pulling: $img"; docker pull --quiet $img }
+python 00-setup/verify-docker.py
+
+# 4. Khởi động hệ thống (7 services)
+docker compose up -d
+
+# 5. Kiểm tra sức khỏe (Smoke test)
+# Đợi khoảng 30s sau khi chạy lệnh trên, rồi chạy các lệnh sau:
+curl.exe -fsS http://localhost:8000/healthz
+curl.exe -fsS http://localhost:3000/api/health
+
+# 6. Chạy Load test (Locust)
+# Cài đặt locust trước: pip install locust
+cd 02-prometheus-grafana/load-test
+locust -f locustfile.py --headless -u 10 -r 2 -t 60s --host http://localhost:8000
+cd ../..
+
+# 7. Trigger Alert (Mô phỏng lỗi và phục hồi)
+# Chạy script PowerShell đã được tạo sẵn:
+.\scripts\trigger-alert.ps1
+
+# 8. Drift detection
+cd 04-drift-detection
+python scripts/drift_detect.py
+cd ..
+
+# 9. Verify (Kiểm tra điều kiện nộp bài)
+python scripts/verify.py
+
+# 10. Stop (Dừng hệ thống)
+docker compose down
 ```
 
 ## Track map
